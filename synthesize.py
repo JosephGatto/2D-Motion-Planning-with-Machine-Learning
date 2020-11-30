@@ -140,7 +140,7 @@ def synthesize_data(start, goal, MAP, map_arr, polar=False, num_sensor_readings=
             # Get polar rotation
             polar_rotation = math.atan2(goal_orn[1], goal_orn[0])
             polar_goals.append((polar_distance, polar_rotation))
-        
+            
             # Get relative steering
             if len(directions) > 1:
                 ds = inv_dirs[direction] - inv_dirs[directions[len(directions)-1]]
@@ -151,15 +151,15 @@ def synthesize_data(start, goal, MAP, map_arr, polar=False, num_sensor_readings=
             steering.append(ds)
             
             # Get movement to next cell
-        directions.append(direction)
+        directions.append(direction) 
         prev=loc
     if robot_type == 'ddr':    
         if polar:
-            return np.array(sensor_readings), np.array(polar_goals), np.array(steering), path
-        return np.array(sensor_readings), np.array(relative_goals), np.array(steering), path
+            return np.array(sensor_readings), np.array(polar_goals), np.array(steering[1:] + steering[:1]), path # Rotated 0 to stop
+        return np.array(sensor_readings), np.array(relative_goals), np.array(steering[1:] + steering[:1]), path
     else:
         
-        return np.array(sensor_readings), np.array(goals), np.array(directions), path
+        return np.array(sensor_readings), np.array(goals), np.array(directions[1:] + directions[:1]), path
 
 def synthesize_train_set(MAPs, num_runs = 5, polar=False, num_sensor_readings=4, robot_type = 'omni'):
     '''
@@ -178,10 +178,15 @@ def synthesize_train_set(MAPs, num_runs = 5, polar=False, num_sensor_readings=4,
         MAP, map_arr = random.choice(MAPs)
         # If path is available, get training info
         try:
-
+            
             (sensor_readings, relative_goals, steering, path) = synthesize_data(start, goal, MAP, map_arr, polar, num_sensor_readings= num_sensor_readings, robot_type= robot_type)
-            train = np.concatenate((sensor_readings, relative_goals, steering), axis=1)
+            if robot_type == 'omni':
+                train = np.concatenate((sensor_readings, relative_goals, steering), axis=1)
+            else:
+                train = np.concatenate((sensor_readings, relative_goals, np.expand_dims(steering, axis=1)), axis=1)
+            
             df.append(train)
+            print(start, goal)
         
         except Exception as e:
             # No path found

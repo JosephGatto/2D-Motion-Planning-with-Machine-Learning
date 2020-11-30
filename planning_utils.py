@@ -94,23 +94,7 @@ def make_tuple(x):
     '''
     return (x.iloc[0], x.iloc[1])
 
-def get_inv_dirs(x):
-    '''
-    Function to encode direction tuple according to hard-coded encoding
-    '''
-    return inv_dirs[x]
-
-def get_steer(x):
-    '''
-    Get either ccw, cw or straight
-    '''
-    if x == 1 or x == -3: # ccw
-        return 1
-    elif x == -1 or x == 3: # cw
-        return 2
-    else: return 0 # straight
-
-def create_classification_problem(df, num_sensor_readings, one_hot=False, robot_type = 'omni'):
+def create_classification_problem(df, num_sensor_readings, enc, robot_type = 'omni'):
     '''
     Now that training data has been synthesized, 
     prepare data for use with ML model. 
@@ -125,16 +109,15 @@ def create_classification_problem(df, num_sensor_readings, one_hot=False, robot_
         df = df[df['out']!='(0.0, 0.0)']
      
         # Label encode targets
-        enc = preprocessing.LabelEncoder()
+#         enc = preprocessing.LabelEncoder()
         df['out'] = enc.fit_transform(df['out'])
         df.drop([num_sensor_readings+2, num_sensor_readings+3], axis=1, inplace=True)
     else:
-
-
         df['out'] = df[num_sensor_readings+2]
-        df = df[df['out'] != 2] # drop 180 degrees turn which can only happen at start node
-        df = df[df['out'] != -2]
-        df['out'] = df['out'].apply(get_steer)
+        df['out'] = df['out'].astype(str)
+        df['out'] = enc.fit_transform(df['out'])
+#         df = df[df['out'] != 2] # drop 180 degrees turn which can only happen at start node
+#         df = df[df['out'] != -2]
         
         df.drop([num_sensor_readings+2], axis=1, inplace=True)
 

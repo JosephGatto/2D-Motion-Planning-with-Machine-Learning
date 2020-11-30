@@ -24,5 +24,18 @@ Next, see main.ipynb for an example of how to
 4) Test model on new maps 
 5) Plot results
 
+## Example output
 
 ![Alt Text](https://github.com/JosephGatto/ML_Motion_Planner/blob/main/images/out.gif)
+
+Here, we see the system output. The model was trained using data generated from 100 randomly generated paths across 10 randomly generated maps. This gif above shows the model navigating in an unseen environment using the trained Random Forest model. 
+
+## TODO
+- Only implemented for fixed map size of (50,50) 
+- Need to implement Deep Learning model in-place of Random Forest. 
+- Would like to allow for non-rectangular obstacles. 
+
+### References / Aknowledgements 
+- Project inspired by / related to https://arxiv.org/abs/1609.07910. 
+- A* code is from https://github.com/richardos/occupancy-grid-a-star 
+- Written by Joseph Gatto & Haowen Liu for Dartmouth COSC 281 final project. 

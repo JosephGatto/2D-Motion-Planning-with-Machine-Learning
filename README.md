@@ -4,7 +4,7 @@ This repository contains a machine learning-based motion planner for either an o
 
 ## How It Works 
 
-Simply using Random Forest, we can learn to navigate new environments given training data generated using a set of randomly generated maps. Treating the robot as a point on a 2D grid, we first get a ground truth path determined by A*. Next, we find the 2D laser scan data at each point, as well as the robot's relative distance to the goal. We create training samples X = (laser_scan, relative goal position) Y = (direction). Using 4-point connectivity, the set of directions will be (up, down, left, right). 
+Simply using Random Forest, we can learn to navigate new environments given training data generated using a set of randomly generated maps. Treating the robot as a point on a 2D grid, we first get a ground truth path determined by A*. Next, we find the 2D laser scan data at each point, as well as the robot's relative distance to the goal. The goal is to turn motion planning into a classification problem. We create training samples X = (laser_scan, relative goal position) Y = (direction). Using 4-point connectivity, the set of directions will be (up, down, left, right). 
 
 Our implementation is entirely numpy/Shapely based and does not utilize ROS. 
 

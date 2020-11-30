@@ -25,4 +25,4 @@ Next, see main.ipynb for an example of how to
 5) Plot results
 
 
-![Alt Text](https://media.giphy.com/media/vFKqnCdLPNOKc/giphy.gif)
+![Alt Text](https://github.com/JosephGatto/ML_Motion_Planner/blob/main/images/out.gif)

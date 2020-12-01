@@ -26,7 +26,9 @@ def get_steer(x):
 def create_classification_problem(df, args, one_hot=False):
     '''
     Now that training data has been synthesized, 
-    prepare data for use with ML model. 
+    prepare data for use with ML model. In general,
+    This function turns robot steering/target commands into
+    categorical labels for learning. 
     '''
 
     if args.robot_type == 'omni':

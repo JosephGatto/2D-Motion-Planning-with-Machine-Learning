@@ -29,26 +29,32 @@ def plot_path_with_lines(pred_path, MAP, directions, args, file_out = 'out.gif')
     Given predicted path nodes and map, 
     plot the path and the sensor readings for each node
     '''
+    # Dir for final GIF
     os.makedirs(args.img_root, exist_ok=True)
+    # Dir for intermediate imgs
     os.makedirs(args.img_root +'/imgs', exist_ok=True)
+    # Update node positions to be at center of shapely cell
     pred_path = [(p[0]+0.5, p[1]+0.5) for p in pred_path]
     # Save filenames for GIF creation
     filenames=[]
     offset=0
-    
     for i, node in enumerate(pred_path):
         # Create fig
         fig = plt.figure(frameon=False)
         fig.set_size_inches(15,10)
+        # Plot start and goal
         plt.scatter(*pred_path[0], s=100, alpha=1.0)
         plt.scatter(*pred_path[-1], s=100, alpha=1.0)
+        # Plot path
         plt.plot(*LineString(pred_path).xy)
         
+        # Plot properly oriented triangle
         if directions[i] != (0, 0):
             offset = args.inv_dirs[directions[i]]
         rot = np.pi/2 * offset 
         plt.scatter(*node, s=100, alpha=1.0, marker = marker_dict[rot])
 
+        # Get sensor data and plot it
         distances, lines = synthetic_sensor(MAP, node, directions[i], args)
         for index, l in enumerate(MAP): 
             if index != 0:

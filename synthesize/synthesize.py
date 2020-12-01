@@ -4,7 +4,6 @@ from shapely.geometry import box, MultiPolygon, LineString, Point, MultiLineStri
 import math
 import matplotlib.pyplot as plt
 import numpy as np
-# %matplotlib inline
 
 from astar.gridmap import OccupancyGridMap
 import matplotlib.pyplot as plt
@@ -29,11 +28,7 @@ from utils.planning import *
 import warnings
 warnings.filterwarnings('ignore')
 
-# Mapping from label encoder (just hard coded it here)
-dirs = {0:(1.0, 0.0), 1:(0.0, 1.0), 2:(-1.0, 0.0), 3:(0.0, -1.0)}
-inv_dirs = {d: label for label, d in dirs.items()}
 
-# num_points_on_circ = 4
 pi = math.pi
 def PointsInCircum(r,n=4, center = (0,0)):
     return np.array([(center[0] + math.cos(2*pi/n*x)*r, center[1] + math.sin(2*pi/n*x)*r) for x in range(0,n+1)])
@@ -41,10 +36,12 @@ def PointsInCircum(r,n=4, center = (0,0)):
 # 4n = 4 point connectivity. 8N = 8 point connectivity
 def synthetic_sensor(MAP, robot_location, direction, args):
     '''
-    Given a shapely map and the robots current location, 
-    return the 360 degree laser scanner. 
+    Generate synthetic sensor data for robot at given location on given map. 
 
-    robot_type-- String denoting robot type. use 'omni' for omnidirectional or 'ddr' for differential drive robot
+    @params
+    MAP-- Shapely map 
+    robot_location-- (x,y) location of robot on map
+    direction-- Current robot orientation. Only used for args.robot_type=='ddr'
     '''
     lines = []
     # 100 is arbitrary radius. Just needs to be big enough to draw line across map.
@@ -65,7 +62,6 @@ def synthetic_sensor(MAP, robot_location, direction, args):
             # Get the closest point
             temp_dist = []
             for point in MAP.intersection(line):
-#                 try:
                 temp_dist.append(LineString([robot_location, point]).length)
             inter = MAP.intersection(line)[np.argmin(temp_dist)]
         elif type(MAP.intersection(line)) == shapely.geometry.collection.GeometryCollection:
@@ -79,15 +75,15 @@ def synthetic_sensor(MAP, robot_location, direction, args):
         new_point = (inter.xy[0][0], inter.xy[1][0])
         lines[i].coords = [robot_location, new_point]
     
-    # Get lase scan data (distances)
+    # Get laser scan data (distances)
     distances = [line.length for line in lines][:args.num_sensor_readings]
     # Account for robot orientation
     if args.robot_type == 'ddr':
         if direction != (0, 0): # Start node
             if args.movement == '4N':
-                offset = int(len(distances) / 4.) * inv_dirs[direction]
+                offset = int(len(distances) / 4.) * args.inv_dirs[direction]
             else: 
-                offset = int(len(distances) / 8.) * inv_dirs[direction]
+                offset = int(len(distances) / 8.) * args.inv_dirs[direction]
             distances = distances[offset:] + distances[:offset]  
     return distances, lines
     
@@ -96,10 +92,14 @@ def synthesize_data(start, goal, MAP, map_arr, args):
     '''
     synthesize data for one step. 
     
-    -Given start and goal, we first get the A* ground truth path. 
-    -If get_path() returns an error, that means there was no path found. 
-    -For each element in the path, use the synthetic sensor to get the readings 
-        the relative goal in odom, and the target movement
+    
+    @params
+    start-- (x,y) position of start node
+    goal-- (x,y) position of goal node
+    MAP-- Shapely map representation
+    map_arr-- Numpy map representation. 
+    args-- hyperparameters from Args class
+
     '''
     
     # Get path if one is available
@@ -109,11 +109,10 @@ def synthesize_data(start, goal, MAP, map_arr, args):
         return
     
     sensor_readings = []
-    goals = []
-    relative_goals = []
-    polar_goals = [] # Polar coordinates used by paper
+    goals, relative_goals, polar_goals = [], [], []
     directions = []
     steering = []
+    
     prev = start
     for i, loc in enumerate(path):
         # Get direction to next cell
@@ -122,7 +121,7 @@ def synthesize_data(start, goal, MAP, map_arr, args):
         # Get rotation
         offset = 0
         if direction != (0, 0): # Start node
-            offset = inv_dirs[direction]
+            offset = args.inv_dirs[direction]
         rot = np.pi/2 * offset
         # Get laser scan
         ls,_ = synthetic_sensor(MAP, (loc[0]+0.5, loc[1]+0.5), direction, args)
@@ -143,9 +142,9 @@ def synthesize_data(start, goal, MAP, map_arr, args):
         
             # Get relative steering
             if len(directions) > 1:
-                ds = inv_dirs[direction] - inv_dirs[directions[len(directions)-1]]
+                ds = args.inv_dirs[direction] - args.inv_dirs[directions[len(directions)-1]]
             elif len(directions) == 1: # First node after start
-                ds = inv_dirs[direction]
+                ds = args.inv_dirs[direction]
             else: ds = 0 # Start node
             
             steering.append(ds)
@@ -161,9 +160,15 @@ def synthesize_data(start, goal, MAP, map_arr, args):
         return np.array(sensor_readings), np.array(goals), np.array(directions[1:] + directions[:1]), path
 
 def synthesize_train_set(MAPs, args):
+    '''
+    Main generation loop for creating a full dataset. 
+
+    @params
+    MAPs-- List of training maps 
+    args-- System hyperparameters from class Args
+    '''
     
     df = []
-    
     for i in tqdm(range(args.num_train_paths)):
         # TODO: Generalize to any map shape
         min_node, max_node = 1, args.map_size[1]-1
@@ -182,7 +187,6 @@ def synthesize_train_set(MAPs, args):
             
         except Exception as e:
             # No path found
-            # print("err")
             continue
     return pd.DataFrame(np.vstack(df))
 
@@ -192,7 +196,7 @@ def quadFits(map_np, sx, sy, rx, ry, margin):
         looks to see if a quad shape will fit in the grid without colliding with any other tiles
         used by placeRoom() and placeRandomRooms()
          
-        Args:
+        @params
             sx and sy: integer, the bottom left coords of the quad to check
             rx and ry: integer, the width and height of the quad, where rx > sx and ry > sy
             margin: integer, the space in grid cells (ie, 0 = no cells, 1 = 1 cell, 2 = 2 cells) to be away from other tiles on the grid
@@ -219,7 +223,7 @@ def placeRandomRooms(map_size, minRoomSize, maxRoomSize, roomStep = 1, margin = 
     takes a brute force approach: randomly a generate quad in a random place -> check if fits -> reject if not
     Populates self.rooms
 
-    Args:
+    @params
         minRoomSize: integer, smallest size of the quad
         maxRoomSize: integer, largest the quad can be
         roomStep: integer, the amount the room size can grow by, so to get rooms of odd or even numbered sizes set roomSize to 2 and the minSize to odd/even number accordingly

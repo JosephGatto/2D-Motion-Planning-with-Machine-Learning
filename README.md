@@ -38,4 +38,5 @@ Here, we see the system output. The model was trained using data generated from 
 ### References / Acknowledgements 
 - Project inspired by / related to https://arxiv.org/abs/1609.07910. 
 - A* code is from https://github.com/richardos/occupancy-grid-a-star 
+- Map generation code based on https://whatjaysaid.wordpress.com/2016/01/15/1228/
 - Written by Joseph Gatto & Haowen Liu for Dartmouth COSC 281 final project. 

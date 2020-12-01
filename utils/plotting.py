@@ -35,10 +35,13 @@ def plot_path_with_lines(pred_path, MAP, directions, args, file_out = 'out.gif')
     # Save filenames for GIF creation
     filenames=[]
     offset=0
+    
     for i, node in enumerate(pred_path):
         # Create fig
         fig = plt.figure(frameon=False)
         fig.set_size_inches(15,10)
+        plt.scatter(*pred_path[0], s=100, alpha=1.0)
+        plt.scatter(*pred_path[-1], s=100, alpha=1.0)
         plt.plot(*LineString(pred_path).xy)
         
         if directions[i] != (0, 0):

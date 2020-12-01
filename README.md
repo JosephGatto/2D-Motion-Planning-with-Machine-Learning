@@ -35,7 +35,7 @@ Here, we see the system output. The model was trained using data generated from 
 - Need to implement Deep Learning model in-place of Random Forest. 
 - Would like to allow for non-rectangular obstacles. 
 
-### References / Aknowledgements 
+### References / Acknowledgements 
 - Project inspired by / related to https://arxiv.org/abs/1609.07910. 
 - A* code is from https://github.com/richardos/occupancy-grid-a-star 
 - Written by Joseph Gatto & Haowen Liu for Dartmouth COSC 281 final project. 
